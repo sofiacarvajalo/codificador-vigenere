@@ -6,6 +6,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Codificador">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f3eadb">
 <title>Codificador</title>
 <style>
 :root{
@@ -40,11 +42,28 @@ dialog::backdrop{background:#0008}
 .swatch{display:flex;gap:4px;margin-top:7px}.swatch i{display:block;width:18px;height:18px;border-radius:50%;border:1px solid #0002}
 .divider{border:0;border-top:1px solid var(--line);margin:18px 0}
 @media(max-width:700px){.app{padding-left:16px;padding-right:16px}.settings-grid,.theme-grid{grid-template-columns:1fr 1fr}.row.mobile-stack{flex-direction:column}}
+
+/* v2.2 — interacción y acabado visual */
+body{background:radial-gradient(circle at 12% 0%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 32rem),var(--bg)}
+.card{position:relative;box-shadow:0 12px 30px #00000012,inset 0 1px 0 #ffffff30}
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,#ffffff18,transparent 34%)}
+button{min-height:46px;box-shadow:0 3px 8px #00000010,inset 0 1px 0 #ffffff25;transition:transform .08s ease,box-shadow .08s ease,filter .08s ease,background .15s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:active{transform:translateY(2px) scale(.985);box-shadow:0 1px 2px #00000018,inset 0 2px 5px #00000018;filter:brightness(.94)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent);outline-offset:2px}
+input,textarea,select{background:color-mix(in srgb,var(--card) 76%,transparent);box-shadow:inset 0 1px 3px #0000000d;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent),inset 0 1px 2px #0000000b}
+.primary{box-shadow:0 5px 13px color-mix(in srgb,var(--accent) 28%,transparent),inset 0 1px 0 #ffffff25}
+.result-actions{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:9px;margin-top:12px}
+.action-btn{display:flex;align-items:center;justify-content:center;gap:7px;font-weight:700}.action-btn .ico{font-size:18px;line-height:1}
+.action-btn.copy-action{background:color-mix(in srgb,var(--accent) 12%,var(--card));border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+nav{box-shadow:0 -8px 25px #0000000d;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+nav button:active{transform:translateY(1px) scale(.97)}
+@media(max-width:700px){.card{border-radius:20px;padding:16px}.result-actions{grid-template-columns:1fr 1fr}.result-actions .copy-action{grid-column:1/-1;min-height:54px}.result-actions .action-btn{min-height:50px}}
 </style>
 </head>
 <body>
 <main class="app">
-<h1>Codificador</h1><div class="sub" id="themeLabel">Arena · v2.1</div>
+<h1>Codificador</h1><div class="sub" id="themeLabel">Arena · v2.2</div>
 
 <section id="coder">
   <div class="card">
@@ -69,7 +88,7 @@ dialog::backdrop{background:#0008}
   <div class="card">
     <label id="resL">Resultado</label>
     <textarea id="res" readonly></textarea>
-    <div class="row mobile-stack" style="margin-top:10px"><button id="copy">Copiar</button><button id="swap">Intercambiar</button><button id="clear" class="danger">Borrar todo</button></div>
+    <div class="result-actions"><button id="copy" class="action-btn copy-action"><span class="ico">⧉</span><span class="action-label">Copiar</span></button><button id="swap" class="action-btn"><span class="ico">⇄</span><span class="action-label">Intercambiar</span></button><button id="clear" class="action-btn danger"><span class="ico">⌫</span><span class="action-label">Borrar todo</span></button></div>
   </div>
   <p class="note">Texto, resultado y clave activa no se guardan ni se envían a un servidor.</p>
 </section>
@@ -198,10 +217,13 @@ function L(l){
   $("typeL").textContent=e?"Cipher type":"Tipo de codificación";$("opL").textContent=e?"Operation":"Operación";$("txtL").textContent=e?"Text":"Texto";
   $("keyL").textContent=e?"Key":"Clave";$("resL").textContent=e?"Result":"Resultado";$("enc").textContent=e?"Encode":"Codificar";
   $("dec").textContent=e?"Decode":"Decodificar";$("paste").textContent=e?"Paste":"Pegar";$("save").textContent=e?"Save key":"Guardar clave";
-  $("go").textContent=e?"Convert":"Convertir";$("copy").textContent=e?"Copy":"Copiar";$("swap").textContent=e?"Swap":"Intercambiar";
-  $("clear").textContent=e?"Clear all":"Borrar todo";C()
+  $("go").textContent=e?"Convert":"Convertir";
+  $("copy").querySelector(".action-label").textContent=e?"Copy":"Copiar";$("swap").querySelector(".action-label").textContent=e?"Swap":"Intercambiar";
+  $("clear").querySelector(".action-label").textContent=e?"Clear all":"Borrar todo";C()
 }
-$("txt").oninput=C;$("enc").onclick=()=>M("enc");$("dec").onclick=()=>M("dec");$("es").onclick=()=>L("es");$("en").onclick=()=>L("en");
+$("txt").oninput=C;
+$("key").addEventListener("input",e=>{let p=e.target.selectionStart,v=e.target.value.toUpperCase();if(e.target.value!==v){e.target.value=v;try{e.target.setSelectionRange(p,p)}catch{}}});
+$("enc").onclick=()=>M("enc");$("dec").onclick=()=>M("dec");$("es").onclick=()=>L("es");$("en").onclick=()=>L("en");
 $("go").onclick=()=>{try{$("err").textContent="";$("res").value=V($("txt").value,$("key").value,mode==="dec")}catch(e){$("err").textContent=e.message}};
 $("eye").onclick=()=>{let show=$("key").type==="password";$("key").type=show?"text":"password";$("eye").textContent=show?"Ocultar":"Mostrar"};
 function clearActive(){$("txt").value=$("res").value=$("key").value="";C()}
@@ -264,7 +286,7 @@ function applyTheme(){
   let t=THEMES[theme]||THEMES.arena,c=dark?t.dark:t.light,r=document.documentElement;
   r.style.setProperty("--bg",c[0]);r.style.setProperty("--card",c[1]);r.style.setProperty("--ink",c[2]);r.style.setProperty("--line",c[3]);r.style.setProperty("--accent",c[4]);
   r.style.setProperty("--soft",c[3]);r.style.setProperty("--muted",c[2]+"aa");r.style.setProperty("--accentInk",dark?"#111":"#fff");
-  $("themeLabel").textContent=`${t.name} · v2.1`;
+  $("themeLabel").textContent=`${t.name} · v2.2`;
   document.querySelectorAll(".appearance").forEach(b=>b.classList.toggle("on",b.dataset.mode===appearance));
   document.querySelectorAll(".theme-btn").forEach(b=>b.classList.toggle("on",b.dataset.theme===theme))
 }
