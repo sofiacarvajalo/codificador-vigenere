@@ -44,7 +44,7 @@ dialog::backdrop{background:#0008}
 </head>
 <body>
 <main class="app">
-<h1>Codificador</h1><div class="sub" id="themeLabel">Arena · v2</div>
+<h1>Codificador</h1><div class="sub" id="themeLabel">Arena · v2.1</div>
 
 <section id="coder">
   <div class="card">
@@ -103,6 +103,7 @@ dialog::backdrop{background:#0008}
       <h2>Seguridad</h2>
       <p class="sub">La contraseña maestra protege únicamente la Bóveda.</p>
       <button id="changePass" style="width:100%">Cambiar contraseña maestra</button>
+      <button id="resetVault" class="danger" style="width:100%;margin-top:9px">Restablecer bóveda</button>
       <p id="passHint" class="sub"></p>
     </div>
   </div>
@@ -146,6 +147,12 @@ dialog::backdrop{background:#0008}
   <div id="passErr" class="error"></div>
 </dialog>
 
+<dialog id="resetDlg">
+<h3>Restablecer bóveda</h3>
+<p><b>Se borrarán permanentemente todas las claves guardadas dentro de la Bóveda.</b></p>
+<p>Esta acción no se puede deshacer. ¿Estás segura?</p>
+<div class="row mobile-stack" style="margin-top:14px"><button id="resetCancel">Cancelar</button><button id="resetConfirm" class="danger">Restablecer de todas maneras</button></div>
+</dialog>
 <script>
 /* Motor histórico: no mostrar ni modificar si se requiere compatibilidad con textos anteriores. */
 const A=[..."ABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ"],P=new Map(A.map((c,i)=>[c,i])),N={"Á":"A","É":"E","Í":"I","Ó":"O","Ú":"U"};
@@ -208,7 +215,7 @@ const E=new TextEncoder(),D=new TextDecoder(),b64=b=>btoa(String.fromCharCode(..
 async function DK(p,s){return crypto.subtle.deriveKey({name:"PBKDF2",salt:s,iterations:250000,hash:"SHA-256"},await crypto.subtle.importKey("raw",E.encode(p),"PBKDF2",false,["deriveKey"]),{name:"AES-GCM",length:256},false,["encrypt","decrypt"])}
 async function store(data,key,salt){let iv=crypto.getRandomValues(new Uint8Array(12)),ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,E.encode(JSON.stringify(data)));localStorage.setItem("vig_vault",JSON.stringify({v:1,salt:b64(salt),iv:b64(iv),ct:b64(ct)}))}
 function vaultExists(){return !!localStorage.getItem("vig_vault")}
-function updateVaultButton(){$("unlock").textContent=vaultExists()?"Desbloquear":"Crear bóveda";$("passHint").textContent=vaultExists()?"La Bóveda ya está creada en este navegador.":"Primero crea la Bóveda para poder establecer y cambiar su contraseña.";$("changePass").disabled=!vaultExists()}
+function updateVaultButton(){let exists=vaultExists();$("unlock").textContent=exists?"Desbloquear":"Crear bóveda";$("passHint").textContent=exists?"La Bóveda ya está creada en este navegador.":"Primero crea la Bóveda para poder establecer y cambiar su contraseña.";$("changePass").disabled=!exists;$("resetVault").disabled=!exists}
 $("unlock").onclick=async()=>{
   try{
     $("verr").textContent="";let p=$("master").value;if(!p)throw Error("Escribe una contraseña.");
@@ -231,6 +238,9 @@ window.U=id=>{let x=VD.find(e=>e.id===id);$("key").value=x.key;document.querySel
 window.CP=async id=>{try{await navigator.clipboard.writeText(VD.find(e=>e.id===id).key)}catch{}};
 window.DEL=async id=>{VD=VD.filter(e=>e.id!==id);await persist();R()};
 
+$("resetVault").onclick=()=>$("resetDlg").showModal();
+$("resetCancel").onclick=()=>$("resetDlg").close();
+$("resetConfirm").onclick=()=>{localStorage.removeItem("vig_vault");VK=null;VD=[];$("opened").classList.add("hidden");$("locked").classList.remove("hidden");$("master").value="";$("verr").textContent="";$("resetDlg").close();updateVaultButton();document.querySelector('[data-v="vault"]').click();};
 $("changePass").onclick=()=>{$("oldPass").value=$("newPass").value=$("newPass2").value="";$("passErr").textContent="";$("passDlg").showModal()};
 $("passCancel").onclick=()=>$("passDlg").close();
 $("passConfirm").onclick=async()=>{
@@ -254,7 +264,7 @@ function applyTheme(){
   let t=THEMES[theme]||THEMES.arena,c=dark?t.dark:t.light,r=document.documentElement;
   r.style.setProperty("--bg",c[0]);r.style.setProperty("--card",c[1]);r.style.setProperty("--ink",c[2]);r.style.setProperty("--line",c[3]);r.style.setProperty("--accent",c[4]);
   r.style.setProperty("--soft",c[3]);r.style.setProperty("--muted",c[2]+"aa");r.style.setProperty("--accentInk",dark?"#111":"#fff");
-  $("themeLabel").textContent=`${t.name} · v2`;
+  $("themeLabel").textContent=`${t.name} · v2.1`;
   document.querySelectorAll(".appearance").forEach(b=>b.classList.toggle("on",b.dataset.mode===appearance));
   document.querySelectorAll(".theme-btn").forEach(b=>b.classList.toggle("on",b.dataset.theme===theme))
 }
